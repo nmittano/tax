@@ -1,0 +1,43 @@
+SELECT 
+  FNDLOOKUPVALUES.MEANING                      "Party Type",
+  XLEP.NAME                                    "Party Name",
+  NULL AS                                      "Party Site Name",
+  HZG.GEOGRAPHY_NAME                           "Country Name",
+  HZP.PARTY_NAME                               "Set As Collecting Authority",
+  HZPP.PARTY_NAME                              "Set As Reporting Authority",
+  ZRTB.REPORTING_TYPE_CODE                     "Tax Reporting Type Code",
+  ZRTB.REPORTING_TYPE_DATATYPE_CODE            "Data Type",
+  ZRTCT.REPORTING_CODE_NAME                    "Reporting Code",
+  TO_CHAR(ZRTC.EFFECTIVE_FROM,'DD-MON-YYYY')   "Rep Codes Effective From",
+  TO_CHAR(ZRTC.EFFECTIVE_TO,'DD-MON-YYYY')     "Rep Codes Effective To"
+FROM
+  XLE_ENTITY_PROFILES   XLEP,
+  XLE_REGISTRATIONS     REG,
+  HR_LOCATIONS_ALL      HRL,
+  XLE_LOOKUPS           FndLookupValues,
+  HZ_GEOGRAPHIES        HZG,
+  ZX_REPORTING_TYPES_B  ZRTB,
+  ZX_REPORTING_CODES_B  ZRTC,
+  ZX_REPORTING_CODES_TL ZRTCT,
+  ZX_RATES_B            ZB,
+  HZ_PARTIES            HZP,
+  HZ_PARTIES            HZPP,
+  XLE_ENTITY_PROFILES   XLEPP,
+  ZX_JURISDICTIONS_VL   ZJV
+WHERE
+  XLEP.LEGAL_ENTITY_ID                   = REG.SOURCE_ID
+  AND REG.LOCATION_ID                    = hrl.location_id
+  AND FndLookupValues.LOOKUP_TYPE        = 'XLE_LEGAL_TYPE'
+  AND FndLookupValues.LOOKUP_CODE        = 'LEGAL_ENTITY'
+  AND HRL.COUNTRY                        = hzg.country_code
+  AND HZG.GEOGRAPHY_TYPE                 = 'COUNTRY'
+  AND HZG.GEOGRAPHY_ID                   = xlep.geography_id
+  AND HZG.GEOGRAPHY_ID                   = zjv.zone_geography_id(+)
+  AND ZRTB.TAX_REGIME_CODE(+)            = zb.TAX_REGIME_CODE
+  AND ZB.TAX_JURISDICTION_CODE(+)        = zjv.tax_jurisdiction_code
+  AND ZRTC.REPORTING_TYPE_ID(+)          = ZRTB.REPORTING_TYPE_ID
+  AND ZRTCT.REPORTING_CODE_ID(+)         = ZRTC.REPORTING_CODE_ID
+  AND XLEP.PARTY_ID                      = HZP.PARTY_ID
+  AND XLEPP.PARTY_ID                      = HZPP.PARTY_ID
+  AND XLEPP.LEGAL_ENTITY_ID                   = REG.SOURCE_ID
+;

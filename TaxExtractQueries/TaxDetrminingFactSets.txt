@@ -1,0 +1,32 @@
+SELECT 
+ZDFT.DET_FACTOR_TEMPL_CODE                          "Det Factor Templ Code",
+ZDFT.DET_FACTOR_TEMPL_NAME                          "Det Factor Templ Name",
+GSOB.NAME                                           "Ledger",
+ZDFT.TAX_REGIME_CODE                                "Tax Regime Code",
+ZDFT.TEMPLATE_USAGE_CODE                            "Template Usage Code",
+FL.MEANING                                          "Determining Factor Class Code",
+ZDFTD.DETERMINING_FACTOR_CQ_CODE                    "Determinin Factor Cq Code",
+ZDFTD.DETERMINING_FACTOR_CODE                       "Determining Factor Code",
+DECODE(ZDFTD.REQUIRED_FLAG,'Y','Yes','N','No')      "Required Flag",
+ZDFTD.TAX_REGIME_DET_LEVEL_CODE                     "Tax Regime Det Level Code",
+ZDFTD.TAX_PARAMETER_CODE                            "Tax Parameter Code"
+FROM 
+ZX_DET_FACTOR_TEMPL_VL        ZDFT,
+GL_SETS_OF_BOOKS              GSOB,
+ZX_DET_FACTOR_TEMPL_DTL       ZDFTD,
+ZX_DETERMINING_FACTORS_VL     ZDFV,
+FND_LOOKUPS                   FL
+WHERE
+ZDFT.LEDGER_ID             = GSOB.SET_OF_BOOKS_ID(+)
+AND ZDFT.DET_FACTOR_TEMPL_ID               = ZDFTD.DET_FACTOR_TEMPL_ID
+AND ZDFV.DETERMINING_FACTOR_CODE               = ZDFTD.DETERMINING_FACTOR_CODE
+AND ZDFTD.DETERMINING_FACTOR_CLASS_CODE = ZDFV.DETERMINING_FACTOR_CLASS_CODE
+AND FL.LOOKUP_CODE    = ZDFTD.DETERMINING_FACTOR_CLASS_CODE            
+AND FL.LOOKUP_TYPE  = 'ZX_DETERMINING_FACTOR_CLASS'
+;
+
+select * from FND_LOOKUPS;
+
+/*PV_ATTRIBUTE_USAGE_TYPE
+JTF_TTY_TERRGP_TYPE
+ZX_DETERMINING_FACTOR_CLASS*/

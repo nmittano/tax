@@ -1,0 +1,73 @@
+SELECT DISTINCT
+    ZJV.TAX_JURISDICTION_CODE                                   "Tax Jurisdiction Code",
+    ZJV.TAX_JURISDICTION_NAME                                   "Tax Jurisdiction Name",
+    ZJV.TAX_REGIME_CODE                                         "Tax Regime Code",
+    ZJV.TAX                                                     "Tax",
+    DECODE(HG.GEOGRAPHY_TYPE,ZTV.ZONE_GEOGRAPHY_TYPE,ZTV.PARENT_GEOGRAPHY_TYPE,NULL)  "Parent Geography Type",
+    DECODE(HG.GEOGRAPHY_TYPE,ZTV.ZONE_GEOGRAPHY_TYPE,HGP.GEOGRAPHY_NAME,NULL)         "Parent Geography Name",
+    HG.GEOGRAPHY_TYPE                                           "Geography Type",
+    TO_CHAR(ZJV.EFFECTIVE_FROM,'DD-Mon-YYYY')                   "Effective From",
+    TO_CHAR(ZJV.EFFECTIVE_TO,'DD-Mon-YYYY')                     "Effective To",
+    HG.GEOGRAPHY_NAME                                           "Geography Name",
+    DECODE(ZJV.INNER_CITY_JURISDICTION_FLAG,'Y','Yes','N','No') "Inner City Jurisdiction",
+    ZJV.PRECEDENCE_LEVEL                                        "Precedence Level",
+    ZTV.TAX_ACCOUNT_SOURCE_TAX                                  "Tax Accounting Source Juri..",
+    ZTV.TAX_EXMPT_SOURCE_TAX                                    "Tax Exemption Source...",
+    HP.PARTY_NAME                                               "Collecting Tax Authority",
+    HPP.PARTY_NAME                                              "Reporting Tax Authority",
+    DECODE(ZJV.DEFAULT_JURISDICTION_FLAG,'Y','Yes','N','No')    "Set as Default Tax Juris..",
+    TO_CHAR(ZJV.DEFAULT_FLG_EFFECTIVE_FROM,'DD-Mon-YYYY')       "Default Effective From",
+    To_Char(ZJV.DEFAULT_FLG_EFFECTIVE_TO,'DD-Mon-YYYY')         "Default Effective To",
+    ZRTB.REPORTING_TYPE_CODE                                    "Tax Reporting Type Code",
+    ZRTB.REPORTING_TYPE_DATATYPE_CODE                           "Data Type",
+    ZFPV.PARTY_NAME                                             "Reporting Code",
+    TO_CHAR(ZRTB.EFFECTIVE_FROM,'DD-MON-YYYY')                  "Rep Codes Effective From",
+    TO_CHAR(ZRTB.EFFECTIVE_TO,'DD-MON-YYYY')                    "Rep Codes Effective To",
+    GL.NAME                                                     "Ledger",
+    HROU.NAME                                                   "Operating Unit",
+    ZA.TAX_ACCOUNT_CCID                                         "Tax Expense",
+    ZA.INTERIM_TAX_CCID                                         "Interim Tax",
+    ZA.FINCHRG_NON_REC_TAX_CCID                                 "Finance Charge Tax Liability",
+    ZA.EDISC_NON_REC_TAX_CCID                                   "Non Recoverable Earned Discts",
+    ZA.UNEDISC_NON_REC_TAX_CCID                                 "Non Recoverable Unearned Disct",
+    ZA.ADJ_NON_REC_TAX_CCID                                     "Non Recoverable Adjustment",
+    ZA.EDISC_CCID                                               "Expense Revenue Earned Discts",
+    ZA.UNEDISC_CCID                                             "Expense Revenue Unearned Disct",
+    ZA.ADJ_CCID                                                 "Expense Revenue Adjustment",
+    ZA.FINCHRG_CCID                                             "Expense Revenue Fin Charg"
+    
+FROM 
+    ZX_JURISDICTIONS_VL   ZJV,
+    HZ_GEOGRAPHIES        HG,
+    HZ_GEOGRAPHIES        HGP,
+    ZX_TAXES_VL           ZTV,
+    HZ_PARTIES            HP,
+    ZX_PARTY_TAX_PROFILE  ZPTP,
+    HZ_PARTIES            HPP,
+    ZX_PARTY_TAX_PROFILE  ZPTPP,
+    ZX_REPORTING_TYPES_B  ZRTB,
+    ZX_FIRST_PARTY_ORGS_ALL_V ZFPV,
+    ZX_MCO_LV_RATES_V     ZMLR,
+    GL_LEDGERS            GL,
+    ZX_ACCOUNTS           ZA,
+    HR_OPERATING_UNITS    HROU
+WHERE
+    ZJV.ZONE_GEOGRAPHY_ID = HG.GEOGRAPHY_ID
+    AND   ZTV.TAX = ZJV.TAX
+    AND   ZTV.TAX_REGIME_CODE = ZJV.TAX_REGIME_CODE
+    AND   ZTV.PARENT_GEOGRAPHY_ID = HGP.GEOGRAPHY_ID (+)
+    AND   ZJV.COLL_TAX_AUTHORITY_ID = ZPTP.PARTY_TAX_PROFILE_ID(+)
+    AND   ZPTP.PARTY_ID = HP.PARTY_ID (+)
+    AND   ZJV.REP_TAX_AUTHORITY_ID = ZPTPP.PARTY_TAX_PROFILE_ID (+)
+    AND   ZPTPP.PARTY_ID = HPP.PARTY_ID (+)
+    AND   ZRTB.TAX_REGIME_CODE(+) = ZJV.TAX_REGIME_CODE
+    AND   ZJV.TAX_JURISDICTION_CODE = ZMLR.TAX_JURISDICTION_CODE(+)
+    AND   ZJV.tax = ZMLR.tax(+)
+    AND   ZJV.TAX_REGIME_CODE = ZMLR.TAX_REGIME_CODE(+)
+    ---AND   ZJV.TAX_JURISDICTION_CODE = 'CI-010074186'
+    AND   ZMLR.CONTENT_OWNER_ID = ZFPV.PARTY_TAX_PROFILE_ID(+)
+    AND   ZJV.TAX_JURISDICTION_ID =za.TAX_ACCOUNT_ENTITY_ID(+)
+    AND   ZA.LEDGER_ID = GL.LEDGER_ID(+)
+    AND   ZA.INTERNAL_ORGANIZATION_ID = HROU.ORGANIZATION_ID(+)
+    
+    ;

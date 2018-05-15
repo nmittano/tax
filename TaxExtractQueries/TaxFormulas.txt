@@ -1,0 +1,69 @@
+SELECT * FROM ZX_MCO_EO_FORMULA_V;
+SELECT * FROM ZX_FORMULA_DETAILS;
+SELECT * FROM ZX_FORMULA_B;
+SELECT * FROM ZX_REP_TRX_DETAIL_T;   ----****ZX_FORMULA_DETAILS
+SELECT * FROM ZX_TAXES_B;    ---Tax_rate_rule_flag
+SELECT * FROM ZX_PARTY_TAX_PROFILE;
+SELECT * FROM ZX_REGIMES_B;
+SELECT * FROM ZX_TAX_AUDIT_LINES;
+SELECT * FROM ZX_LINES;                   ---Reporting period id, 
+select * from ZX_RATES_B;
+select * from JG_ZZ_VAT_REP_ENTITIES;
+select * from fnd_lookups;
+select * from CZ_RULES;
+SELECT * FROM ZX_JURISDICTIONS_VL;
+
+SELECT 
+    ZME.CONTENT_OWNER_NAME                                  "Configuration Owner",
+    ZME.FORMULA_CODE                                        "Tax Formula Code",
+    ZME.FORMULA_NAME                                        "Name",
+    FL.MEANING                                              "Formula Type",
+    ZME.TAX_REGIME_CODE                                     "Regime Code",
+    ZME.TAX                                                 "Tax",
+    TO_CHAR(ZME.EFFECTIVE_FROM,'DD-MON-YYYY')               "Effective From",   
+    TO_CHAR(ZME.EFFECTIVE_TO,'DD-MON-YYYY')                 "Effective To",
+    DECODE(ZME.ENABLED_FLAG,'Y','Yes','N','No')             "Enable Tax Formula",
+    FL1.MEANING                                             "Taxable Basis Type",
+    ZME.BASE_RATE_MODIFIER                                  "Base Rate Modifier",
+    DECODE(ZME.CASH_DISCOUNT_APPL_FLAG,'Y','Yes','N','No')  "Subtract Cash Discount",
+    ZFD.COMPOUNDING_TAX_REGIME_CODE                         "Compounding Regime Code",
+    ZFD.COMPOUNDING_TAX                                     "Compounding_Tax",
+    ZTP.TAX_PRECEDENCE                                      "Compounding Rule",
+    DECODE(ZFD.ENFORCE_COMPOUNDING_FLAG,'Y','Yes','N','No') "Enforce Compounding",
+    DECODE(ZME.DUPLICATE_ACCESS,'Y','Yes','N','No')         "Dupliacte",
+    ZME.ATTRIBUTE_CATEGORY,
+    ZME.ATTRIBUTE1,
+    ZME.ATTRIBUTE2,
+    ZME.ATTRIBUTE3,
+    ZME.ATTRIBUTE4,
+    ZME.ATTRIBUTE5,
+    ZME.ATTRIBUTE6,
+    ZME.ATTRIBUTE7,
+    ZME.ATTRIBUTE8,
+    ZME.ATTRIBUTE9,
+    ZME.ATTRIBUTE10,
+    ZME.ATTRIBUTE11,
+    ZME.ATTRIBUTE12,
+    ZME.ATTRIBUTE13,
+    ZME.ATTRIBUTE14,
+    ZME.ATTRIBUTE15
+FROM 
+    ZX_MCO_EO_FORMULA_V     ZME,
+    ZX_FORMULA_DETAILS      ZFD,
+    FND_LOOKUPS             FL,
+    FND_LOOKUPS             FL1,
+    ZX_TAX_PRIORITIES_T     ZTP
+WHERE
+    ZME.FORMULA_ID          = ZFD.FORMULA_ID(+)
+    AND FL.LOOKUP_CODE(+)   = ZME.FORMULA_TYPE_CODE
+    AND FL.LOOKUP_TYPE(+)   = 'ZX_FORMULA_TYPES'
+    AND ZME.TAX_REGIME_CODE = ZTP.TAX_REGIME_CODE(+)
+    AND FL1.LOOKUP_CODE(+)  = ZME.TAXABLE_BASIS_TYPE_CODE
+    AND FL1.LOOKUP_TYPE(+)  = 'ZX_TAXABLE_BASIS_TYPES'
+ORDER BY
+    ZME.FORMULA_CODE
+;
+
+---ZX_ADJ_FOR_ADHOC_AMT
+---ZX_FORMULA_TYPES   ***
+---ZX_TEMPLATE_USAGE

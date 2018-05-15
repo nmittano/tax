@@ -1,0 +1,79 @@
+SELECT 
+  FNDLOOKUPVALUES.MEANING                      "Party Type",
+  XLEP.NAME                                    "Party Name",
+  NULL AS                                      "Party Site Name",
+  HZG.GEOGRAPHY_NAME                           "Country Name",
+  ZRTB.REPORTING_TYPE_CODE                     "Tax Reporting Type Code",
+  ZRTB.REPORTING_TYPE_DATATYPE_CODE            "Data Type",
+  ZRTCT.REPORTING_CODE_NAME                    "Reporting Code",
+  TO_CHAR(ZRTC.EFFECTIVE_FROM,'DD-MON-YYYY')   "Rep Codes Effective From",
+  TO_CHAR(ZRTC.EFFECTIVE_TO,'DD-MON-YYYY')     "Rep Codes Effective To",
+  zb.TAX_REGIME_CODE                           "Tax Regime Code",
+  zrt.TAX_REGIME_NAME                          "Tax Regime Name",
+  TER.TERRITORY_SHORT_NAME                     "Configuration Country Name",
+  FL1.MEANING                                  "Configuration For Taxes Rules",
+  FL2.MEANING                                  "Configuration For Period Ex..",
+  TO_CHAR(ZSO.EFFECTIVE_FROM,'DD-MON-YYYY')    "Configuration Effective From",
+  TO_CHAR(ZSO.EFFECTIVE_To,'DD-MON-YYYY')      "Configuration Effective To",
+  pty.party_name                               "Service Povider",
+  FL.MEANING                                   "Business Flow",
+  TO_CHAR(zrb.EFFECTIVE_FROM,'DD-MON-YYYY')    "Servce Provider Effective From",
+  TO_CHAR(zrb.EFFECTIVE_TO,'DD-MON-YYYY')      "Servce Provider Effective To"
+  
+  
+FROM XLE_ENTITY_PROFILES xlep,
+  XLE_REGISTRATIONS reg,
+  HR_LOCATIONS_ALL HRL,
+  XLE_LOOKUPS FndLookupValues,
+  HZ_GEOGRAPHIES hzg,
+  ZX_RATES_B ZB,
+  ZX_JURISDICTIONS_VL ZJV,
+  HZ_PARTIES   HZP,
+  ZX_REPORTING_TYPES_B  ZRTB,
+  ZX_REPORTING_CODES_B  ZRTC,
+  ZX_REPORTING_CODES_TL  ZRTCT,
+  zx_regimes_tl zrt,
+  zx_regimes_b zrb,
+  hz_parties pty,
+  XLE_ENTITY_PROFILES xlep1,
+  zx_party_Tax_profile ptp,
+  zx_regimes_usages  ZRU,
+  zx_subscription_options zso,
+  zx_srvc_subscriptions zss,
+  FND_LOOKUPS   FL,
+  FND_LOOKUPS   FL1,
+  FND_LOOKUPS   FL2,
+  zx_regimes_vl zrv,
+  fnd_territories_vl ter
+WHERE 
+     xlep.legal_entity_id             = reg.source_id
+     AND reg.source_table                   = 'XLE_ENTITY_PROFILES'
+     AND reg.location_id                    = hrl.location_id
+     AND FndLookupValues.LOOKUP_TYPE        = 'XLE_LEGAL_TYPE'
+     AND FndLookupValues.LOOKUP_CODE        = 'LEGAL_ENTITY'
+     AND hrl.COUNTRY                        = hzg.country_code
+     AND hzg.geography_type                 = 'COUNTRY'
+     AND hzg.geography_id                   = xlep.geography_id
+     AND hzg.geography_id                   = zjv.zone_geography_id(+)
+     AND zb.tax_jurisdiction_code(+)       = zjv.tax_jurisdiction_code
+     AND xlep.party_id = hzp.party_id
+     and ZRTB.TAX_REGIME_CODE(+) = zb.TAX_REGIME_CODE
+     AND ZRTC.REPORTING_TYPE_ID(+) = ZRTB.REPORTING_TYPE_ID
+     AND ZRTCT.REPORTING_CODE_ID(+) = ZRTC.REPORTING_CODE_ID
+     AND zb.tax_regime_code              = zrb.tax_regime_code(+)
+     and zrb.TAX_REGIME_ID        =  zrt.tax_regime_id(+)
+     and ptp.party_id               = pty.party_id
+     AND xlep1.party_id           = pty.party_id
+     and reg.source_id          =  xlep1.legal_entity_id
+     AND ZRU.TAX_REGIME_ID(+)  = ZRB.TAX_REGIME_ID
+     AND  zru.regime_usage_id      = zso.regime_usage_id(+)
+     AND  zru.regime_usage_id      = zss.regime_usage_id(+)
+     AND FL.LOOKUP_CODE(+)  = zss.PROD_FAMILY_GRP_CODE
+     AND FL.LOOKUP_TYPE(+) =  'ZX_PRODUCT_FAMILY_GROUP'
+     AND FL1.LOOKUP_CODE(+)  = ZSO.SUBSCRIPTION_OPTION_CODE
+     AND FL1.LOOKUP_TYPE(+) =  'ZX_SUBSCRIPTION_OPTION'
+     AND FL2.LOOKUP_CODE(+)  = ZSO.SUBSCRIPTION_OPTION_CODE
+     AND FL2.LOOKUP_TYPE(+) =  'ZX_SUBSCRIPTION_OPTION'
+     and zrv.TAX_REGIME_ID(+) = zrb.TAX_REGIME_ID
+     AND  ter.territory_code(+)             = zrv.country_code     
+;

@@ -1,0 +1,115 @@
+SELECT 
+    FNDLOOKUPVALUES.MEANING                         "Party Type",
+    XLEP.NAME                                       "Party Name",
+    NULL AS                                         "Party Site Name",
+    HZG.GEOGRAPHY_NAME                              "Country Name",
+    DECODE(PTP.SELF_ASSESS_FLAG,'Y','Yes','N','No') "Self Assessment/Reverse Charge",
+    DECODE(ALLOW_OFFSET_TAX_FLAG,'Y','Yes','N','No') "SetInvoiceValues as Tax Incl..",
+    ZIC.LOOKUP_CODE                                 "Tax Classification",
+    FL3.MEANING                                     "Rounding Level",
+    FL4.MEANING                                     "Rounding Rule",
+    XFI.ACTIVITY_CATEGORY                           "Business Activity Type",
+    XFI.ACTIVITY_CODE                               "Business Activity Code",
+    XFI.ACTIVITY_DESCRIPTION                        "Code Description",
+    ZFCTB.CLASSIFICATION_TYPE_CODE                  "Fiscal Classification Code",
+    ZFCTB.CLASSIFICATION_TYPE_CATEG_CODE            "Fiscal Classification Typ Code",
+    ZFCTT.CLASSIFICATION_TYPE_NAME                  "Fiscal Classification Name",
+    TO_CHAR(ZFCTB.EFFECTIVE_FROM,'DD-MON-YYYY')     "Effective From",
+    TO_CHAR(ZFCTB.EFFECTIVE_TO,'DD-MON-YYYY')       "Effective To",
+    ZRTB.REPORTING_TYPE_CODE                        "Tax Reporting Type Code",
+    ZRTB.REPORTING_TYPE_DATATYPE_CODE               "Data Type",
+    ZRTCT.REPORTING_CODE_NAME                       "Reporting Code",
+    TO_CHAR(ZRTC.EFFECTIVE_FROM,'DD-MON-YYYY')      "Rep Codes Effective From",
+    TO_CHAR(ZRTC.EFFECTIVE_TO,'DD-MON-YYYY')        "Rep Codes Effective To",
+    ZB.TAX_REGIME_CODE                              "Tax Regime Code",
+    ZRT.TAX_REGIME_NAME                             "Tax Regime Name",
+    TER.TERRITORY_SHORT_NAME                        "Configuration Country Name",
+    FL1.MEANING                                     "Configuration For Taxes Rules",
+    FL2.MEANING                                     "Configuration For Period Ex..",
+    TO_CHAR(ZSO.EFFECTIVE_FROM,'DD-MON-YYYY')       "Configuration Effective From",
+    TO_CHAR(ZSO.EFFECTIVE_To,'DD-MON-YYYY')         "Configuration Effective To",
+    PTY.PARTY_NAME                                  "Service Povider",
+    FL.MEANING                                      "Business Flow",
+    TO_CHAR(zrb.EFFECTIVE_FROM,'DD-MON-YYYY')       "Servce Provider Effective From",
+    TO_CHAR(zrb.EFFECTIVE_TO,'DD-MON-YYYY')         "Servce Provider Effective To"
+  
+FROM 
+    XLE_ENTITY_PROFILES     XLEP,
+    XLE_REGISTRATIONS       REG,
+    HR_LOCATIONS_ALL        HRL,
+    XLE_LOOKUPS             FndLookupValues,
+    HZ_GEOGRAPHIES          HZG,
+    ZX_RATES_B              ZB,
+    ZX_JURISDICTIONS_VL     ZJV,
+    HZ_PARTIES              HZP,
+    ZX_REPORTING_TYPES_B    ZRTB,
+    ZX_REPORTING_CODES_B    ZRTC,
+    ZX_REPORTING_CODES_TL   ZRTCT,
+    ZX_REGIMES_TL           ZRT,
+    ZX_REGIMES_B            ZRB,
+    ZX_REGIMES_VL           ZRV,
+  ---hr_operating_units hou,
+    HZ_PARTIES              PTY,
+    XLE_ENTITY_PROFILES     XLEP1,
+    ZX_PARTY_TAX_PROFILE    PTP,
+    ZX_REGIMES_USAGES       ZRU,
+    ZX_SUBSCRIPTION_OPTIONS ZSO,
+    ZX_SRVC_SUBSCRIPTIONS   ZSS,
+    FND_LOOKUPS             FL,
+    FND_LOOKUPS             FL1,
+    FND_LOOKUPS             FL2,
+    FND_LOOKUPS             FL3,
+    FND_LOOKUPS             FL4,
+    FND_TERRITORIES_VL      TER,
+    XLE_FIRSTPARTY_INFORMATION_V  XFI,
+    ZX_FC_TYPES_VL          ZFCTB,
+    ZX_FC_TYPES_TL          ZFCTT,
+    ZX_FC_TYPES_REG_ASSOC   ZFCTR,
+    ZX_INPUT_CLASSIFICATIONS_V  ZIC
+WHERE 
+    XLEP.LEGAL_ENTITY_ID                   = REG.SOURCE_ID
+    AND REG.SOURCE_TABLE                   = 'XLE_ENTITY_PROFILES'
+    AND REG.LOCATION_ID                    = HRL.LOCATION_ID
+    AND FndLookupValues.LOOKUP_TYPE        = 'XLE_LEGAL_TYPE'
+    AND FndLookupValues.LOOKUP_CODE        = 'LEGAL_ENTITY'
+    AND HRL.COUNTRY                        = HZG.COUNTRY_CODE
+    AND HZG.GEOGRAPHY_TYPE                 = 'COUNTRY'
+    AND HZG.GEOGRAPHY_ID                   = XLEP.GEOGRAPHY_ID
+---AND jur.geography_id                   = hzg.geography_id
+    AND HZG.GEOGRAPHY_ID                   = ZJV.ZONE_GEOGRAPHY_ID(+)
+---and hou.BUSINESS_GROUP_ID(+)           = xlep.LEGAL_ENTITY_ID
+---and zjv.tax                        = ztb.tax
+---AND zjv.tax_regime_code            = ztb.tax_regime_code
+    AND ZB.TAX_JURISDICTION_CODE(+)       = ZJV.TAX_JURISDICTION_CODE
+    AND XLEP.PARTY_ID = HZP.PARTY_ID
+    AND ZRTB.TAX_REGIME_CODE(+)           = zb.TAX_REGIME_CODE
+    AND ZRTC.REPORTING_TYPE_ID(+)         = ZRTB.REPORTING_TYPE_ID
+    AND ZRTCT.REPORTING_CODE_ID(+)        = ZRTC.REPORTING_CODE_ID
+    AND ZB.TAX_REGIME_CODE                = ZRB.TAX_REGIME_CODE(+)
+    AND zrb.TAX_REGIME_ID                 =  ZRT.TAX_REGIME_ID(+)
+    AND PTP.PARTY_ID                      = PTY.PARTY_ID
+    AND XLEP1.PARTY_ID                    = PTY.PARTY_ID
+    AND REG.SOURCE_ID                     =  XLEP1.LEGAL_ENTITY_ID
+    AND ZRU.TAX_REGIME_ID(+)              = ZRB.TAX_REGIME_ID
+    AND ZRU.REGIME_USAGE_ID               = ZSO.REGIME_USAGE_ID(+)
+    AND  ZRU.REGIME_USAGE_ID              = ZSS.REGIME_USAGE_ID(+)
+    AND FL.LOOKUP_CODE(+)                 = ZSS.PROD_FAMILY_GRP_CODE
+    AND FL.LOOKUP_TYPE(+)                 =  'ZX_PRODUCT_FAMILY_GROUP'
+    AND FL1.LOOKUP_CODE(+)                = ZSO.SUBSCRIPTION_OPTION_CODE
+    AND FL1.LOOKUP_TYPE(+)                =  'ZX_SUBSCRIPTION_OPTION'
+    AND FL2.LOOKUP_CODE(+)                = ZSO.SUBSCRIPTION_OPTION_CODE
+    AND FL2.LOOKUP_TYPE(+)                =  'ZX_SUBSCRIPTION_OPTION'
+    AND FL3.LOOKUP_CODE(+)                = PTP.ROUNDING_LEVEL_CODE
+    AND FL3.LOOKUP_TYPE(+)                = 'ZX_ROUNDING_LEVEL'
+    AND FL4.LOOKUP_CODE(+)                = PTP.ROUNDING_RULE_CODE
+    AND FL4.LOOKUP_TYPE(+)                = 'ZX_ROUNDING_RULE'
+    AND ZRV.TAX_REGIME_ID(+)              = ZRB.TAX_REGIME_ID
+    AND TER.TERRITORY_CODE(+)             = ZRV.COUNTRY_CODE
+    AND XLEP.PARTY_ID                     = XFI.PARTY_ID(+)
+    AND ZFCTB.CLASSIFICATION_TYPE_ID      = ZFCTT.CLASSIFICATION_TYPE_ID(+)
+    AND ZRV.TAX_REGIME_CODE               = ZFCTR.TAX_REGIME_CODE(+)
+    AND ZFCTB.CLASSIFICATION_TYPE_CODE(+) = ZFCTR.CLASSIFICATION_TYPE_CODE
+    AND zic.LOOKUP_TYPE IN ('ZX_INPUT_CLASSIFICATIONS','ZX_WEB_EXP_TAX_CLASSIFICATIONS','ZX_OUTPUT_CLASSIFICATIONS')
+    AND ZIC.ORG_ID                        = REG.SOURCE_ID               
+
+;
